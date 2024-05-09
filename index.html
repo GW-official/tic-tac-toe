@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    #container {
+      text-align: center;
+    }
+
+    #mode {
+      margin-bottom: 20px;
+    }
+
+    #mode button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      background-color: #6c5ce7;
+      color: white;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    #mode button:hover {
+      background-color: #a29bfe;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-gap: 5px;
+      width: 310px;
+      margin: 0 auto;
+    }
+
+    .cell {
+      background-color: #ff7675;
+      border: 1px solid #d63031;
+      width: 100px;
+      height: 100px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 3em;
+      cursor: pointer;
+      border-radius: 10px;
+      transition: background-color 0.3s;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
+    }
+
+    .cell:hover {
+      background-color: #fab1a0;
+    }
+
+    .modal {
+      display: none; 
+      position: fixed; 
+      z-index: 1; 
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%; 
+      overflow: auto; 
+      background-color: rgba(0,0,0,0.6);
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto; 
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%; 
+      text-align: center;
+      border-radius: 10px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      background-color: #6c5ce7;
+      color: white;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    .btn:hover {
+      background-color: #a29bfe;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="mode">
+      <button id="player">Play against a friend</button>
+      <button id="computer">Play against computer</button>
+    </div>
+    <div id="board" class="board" style="display: none;">
+      <div class="cell" id="0"></div>
+      <div class="cell" id="1"></div>
+      <div class="cell" id="2"></div>
+      <div class="cell" id="3"></div>
+      <div class="cell" id="4"></div>
+      <div class="cell" id="5"></div>
+      <div class="cell" id="6"></div>
+      <div class="cell" id="7"></div>
+      <div class="cell" id="8"></div>
+    </div>
+    <button id="home" class="btn" style="display: none;">Home</button>
+    <div id="winPopup" class="modal">
+      <div class="modal-content">
+        <span id="winnerMessage"></span>
+        <button id="tryAgain" class="btn">Try Again</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    let isAgainstComputer = false;
+    let currentPlayer = "X"; // Initialize currentPlayer
+
+    const modeButtons = document.getElementById("mode");
+    const playerButton = document.getElementById("player");
+    const computerButton = document.getElementById("computer");
+    const board = document.getElementById("board");
+    const cells = document.querySelectorAll(".cell");
+    const homeButton = document.getElementById("home");
+    const winPopup = document.getElementById("winPopup");
+    const winnerMessage = document.getElementById("winnerMessage");
+    const tryAgainButton = document.getElementById("tryAgain");
+    const gameState = ["", "", "", "", "", "", "", "", ""];
+
+    playerButton.addEventListener("click", () => {
+      isAgainstComputer = false;
+      modeButtons.style.display = "none";
+      board.style.display = "grid";
+      homeButton.style.display = "inline-block";
+      startGame();
+    });
+
+    computerButton.addEventListener("click", () => {
+      isAgainstComputer = true;
+      modeButtons.style.display = "none";
+      board.style.display = "grid";
+      homeButton.style.display = "inline-block";
+      startGame();
+    });
+
+    homeButton.addEventListener("click", () => {
+      modeButtons.style.display = "block";
+      board.style.display = "none";
+      homeButton.style.display = "none";
+      winPopup.style.display = "none";
+      resetGame();
+    });
+
+    tryAgainButton.addEventListener("click", () => {
+      winPopup.style.display = "none";
+      resetGame();
+    });
+
+    function startGame() {
+      cells.forEach((cell, index) => {
+        cell.textContent = "";
+        cell.addEventListener("click", () => {
+          if (gameState[index] === "" && !checkWinner()) {
+            cell.textContent = currentPlayer;
+            gameState[index] = currentPlayer;
+            if (checkWinner()) {
+              winnerMessage.textContent = `Player ${currentPlayer} wins!`;
+              winPopup.style.display = "block";
+            } else if (!gameState.includes("")) {
+              winnerMessage.textContent = "It's a draw!";
+              winPopup.style.display = "block";
+            } else {
+              if (isAgainstComputer) {
+                currentPlayer = currentPlayer === "X" ? "O" : "X";
+                computerMove();
+              } else {
+                currentPlayer = currentPlayer === "X" ? "O" : "X";
+              }
+            }
+          }
+        });
+      });
+    }
+
+    function computerMove() {
+      const emptyCells = gameState.reduce((acc, val, index) => {
+        if (val === "") acc.push(index);
+        return acc;
+      }, []);
+
+      const randomIndex = Math.floor(Math.random() * emptyCells.length);
+      const cellIndex = emptyCells[randomIndex];
+
+      cells[cellIndex].textContent = currentPlayer;
+      gameState[cellIndex] = currentPlayer;
+
+      if (checkWinner()) {
+        winnerMessage.textContent = `Player ${currentPlayer} wins!`;
+        winPopup.style.display = "block";
+      } else if (!gameState.includes("")) {
+        winnerMessage.textContent = "It's a draw!";
+        winPopup.style.display = "block";
+      } else {
+        currentPlayer = currentPlayer === "X" ? "O" : "X";
+      }
+    }
+
+    function checkWinner() {
+      const winPatterns = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6],
+      ];
+
+      for (let pattern of winPatterns) {
+        const [a, b, c] = pattern;
+        if (gameState[a] !== "" && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function resetGame() {
+      gameState.fill("");
+      cells.forEach(cell => {
+        cell.textContent = "";
+      });
+    }
+  </script>
+</body>
+</html>
